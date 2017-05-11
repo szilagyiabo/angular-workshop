@@ -5,7 +5,7 @@ This is a step-by-step guide to start learning Angular2
 ## Prerequisites
 
 Node.js and npm are essential to this project. 
-I will **node v4.9.5** and **npm 3.10.10**.
+I will use **node v4.9.5** and **npm 3.10.10**.
 
 You can install them from official Node.js website: https://nodejs.org/en/
 (LTS is recommended)
@@ -278,5 +278,13 @@ ngOnInit() {
 }
 ```
 This will refresh the current weather in every minutes.
+
+## Lesson 6
+### Deployment
+Angular CLI provides us an awesome tool to build our app.
+`ng build --prod --aot`
+This command will generate a *dist* folder, where the compiled, minified, everyfied files are located. To delpoy the app we only need this folder. This way we can easily integrate this into any CI/CD tool. 
+OR
+The app could be easily hosted on AWS S3. There is CLI for aws, and also for s3, so its highly scriptable. I recommend to read my article about this topic: https://medium.com/@szilagyiabo/angular2-s3-love-deploy-to-cloud-in-6-steps-3f312647a659
 
 
