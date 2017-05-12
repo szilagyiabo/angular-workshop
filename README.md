@@ -5,7 +5,7 @@ This is a step-by-step guide to start learning Angular2
 ## Prerequisites
 
 Node.js and npm are essential to this project. 
-I will **node v4.9.5** and **npm 3.10.10**.
+I will **node v6.9.5** and **npm 3.10.10**.
 
 You can install them from official Node.js website: https://nodejs.org/en/
 (LTS is recommended)
@@ -78,7 +78,7 @@ Check your browser! It's working! :)
 ## Lesson 3
 ### Adding new component
 What is a component? And how this all works?
-This is the sshematic architecture of an Angular2 app:
+This is the schematic architecture of an Angular2 app:
 ![Angular2 architecture](https://angular.io/resources/images/devguide/architecture/overview2.png)
 https://angular.io/docs/ts/latest/guide/architecture.html
 
@@ -172,7 +172,7 @@ Than modify the constructor like this:
 constructor(private openWeatherApiService: OpenWeatherApiService) { }
 ```
 Thats it. We have just dependency inject our service. Cool, right? :)
-Now we can acceess the service vie the *openWeatherApiService* variable.
+Now we can acceess the service via the *openWeatherApiService* variable.
 Let's create a new variable in this file which will store the current temperature from the service. This variable will be displayed in the HTML file too. So the *temperature-box.component.ts* file will be look like:
 ```ts
 import { OpenWeatherApiService } from '../open-weather-api.service';
@@ -240,7 +240,7 @@ We pimped up out *getCurrentWeather()* function to call OpenWeatherMap API, and 
 Cool our service is now do what she do best.
 
 Now we have to update our *weather-box.component.ts* too, to handle this service call.
-If we want to use an Observer, we have to subscribe on it. It's not too complicated, just call its *subscribe()* function. So our component will be look like this:
+If we want to use an Observable, we have to subscribe on it. It's not too complicated, just call its *subscribe()* function. So our component will be look like this:
 ```ts
 import { OpenWeatherApiService } from '../open-weather-api.service';
 import { Component, OnInit } from '@angular/core';
@@ -329,7 +329,7 @@ export class LocationService {
 }
 ```
 
-Nothing new. Just some imports, a dependency injection, a function which do the HTTP call, adn return with an Observe. Easy right?
+Nothing new. Just some imports, a dependency injection, a function which do the HTTP call, adn return with an Observable. Easy right?
 
 Now we are able to define our current location, so do that, and pass it to the weather service. Open up our *temperature-box.component.ts* file, import this new service, inject it, and use it. The result will be look like this:
 ```ts
