@@ -108,7 +108,7 @@ Modify the newly generated *temperature-box.component.html* file:
 </p>
 ```
 This will tell us, how is the weater today. It's a little dummy so far, but will be smarter soon. :)
-Now add this *weater-box* to our application! Open up the *app.component.html* file, and add the following line to the end of the file:
+Now add this *temperature-box* to our application! Open up the *app.component.html* file, and add the following line to the end of the file:
 ```html 
 <app-temperature-box></app-temperature-box> 
 ```
@@ -239,7 +239,7 @@ What we modified here are some import to use http requests, and Observable to ma
 We pimped up out *getCurrentWeather()* function to call OpenWeatherMap API, and parse the response body. 
 Cool our service is now do what she do best.
 
-Now we have to update our *weather-box.component.ts* too, to handle this service call.
+Now we have to update our *temperature-box.component.ts* too, to handle this service call.
 If we want to use an Observable, we have to subscribe on it. It's not too complicated, just call its *subscribe()* function. So our component will be look like this:
 ```ts
 import { OpenWeatherApiService } from '../open-weather-api.service';
@@ -272,9 +272,7 @@ And that's all. Refresh your browser and see some magic. :)
 
 To make it near-realtime, and do auto refresh, we modify our *getCurrentWeather()* function, like so:
 ```ts
-getCurrentWeather(city, country): Observable<Object> {
-    const apiUrl = this.weatherApiEndpoint + `&q=${city},${country}`;
-
+getCurrentWeather(): Observable<Object> {
     return Observable
       .timer(0, 60000)
       .flatMap(() => {
@@ -442,7 +440,7 @@ And then, we pass the options as the second parameter of the *http.get* call. We
 
 Link this service to the *app.component.ts* file. 
 ```ts
-...
+import { Component, OnInit } from '@angular/core';
 import { BackgroundImageApiService } from './background-image-api.service';
 ...
 export class AppComponent implements OnInit{
