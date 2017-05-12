@@ -271,11 +271,21 @@ export class TemperatureBoxComponent implements OnInit {
 Here we just created a new function *getCurrentWeatherData()*, which handle response from service. In this case, we store the temperature data to our *currentTemp* variable. (with K -> C convert)
 And that's all. Refresh your browser and see some magic. :)
 
-To make it near-realtime, and do auto refresh, we need to put the function call in a *setInterval()* function, like so:
+To make it near-realtime, and do auto refresh, we modify our *getCurrentWeather()* function, like so:
 ```ts
-ngOnInit() {
-    setInterval(() => this.getCurrentWeatherData(), 60000);
-}
+getCurrentWeather(city, country): Observable<Object> {
+    const apiUrl = this.weatherApiEndpoint + `&q=${city},${country}`;
+
+    return Observable
+      .timer(0, 60000)
+      .flatMap(() => {
+        return this.http.get(apiUrl)
+          .map(response => {
+            const weatherBody = JSON.parse(response['_body']);
+            return weatherBody || { };
+          });
+      });
+  }
 ```
 This will refresh the current weather in every minutes.
 
