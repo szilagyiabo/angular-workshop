@@ -5,7 +5,7 @@ This is a step-by-step guide to start learning Angular2
 ## Prerequisites
 
 Node.js and npm are essential to this project. 
-I will use **node v4.9.5** and **npm 3.10.10**.
+I will **node v4.9.5** and **npm 3.10.10**.
 
 You can install them from official Node.js website: https://nodejs.org/en/
 (LTS is recommended)
@@ -104,7 +104,7 @@ installing component
 Modify the newly generated *temperature-box.component.html* file:
 ```html
 <p>
-  It 32&deg; out there.
+  It's 32&deg; out there.
 </p>
 ```
 This will tell us, how is the weater today. It's a little dummy so far, but will be smarter soon. :)
@@ -117,7 +117,6 @@ But what the hack is this tag? Ain't nobody get tag for this!
 The short answer is: We did it.
 
 Check out the *temperature-box.component.ts*! We defined this component with the selector *'app-temperature-box'*. And any time we use this selector, this will inject our template to the code. (the template which given with the *templateUrl*, and *styleUrls*)
-
 
 ## Lesson 4
 ### Adding a new service
@@ -290,11 +289,263 @@ getCurrentWeather(city, country): Observable<Object> {
 This will refresh the current weather in every minutes.
 
 ## Lesson 6
+### Add more service
+Now we are getting data from openweathermap API. Let's go a little bit further. Let's create a new service called *location*:
+`ng g service location`
+Add this new service as a provider to the *app.module.ts* file.
+```ts
+import { LocationService } from './location.service';
+...
+...
+providers: [
+    OpenWeatherApiService,
+    LocationService
+  ],
+...
+```
+
+This service will define our location with a simple API call. Open up our *location.service.ts* file, and create this HTTP call:
+```ts
+import { Injectable } from '@angular/core';
+
+import { Http } from '@angular/http';
+import { Observable } from 'rxjs/Observable';
+
+import 'rxjs/Rx';
+
+@Injectable()
+export class LocationService {
+
+  locationApiEndpoint = 'http://ipinfo.io';
+
+  constructor(private http: Http) { }
+
+  getCurrentLocation(): Observable<Object> {
+    return this.http.get(this.locationApiEndpoint)
+      .map(response => {
+        return JSON.parse(response['_body']) || {};
+      });
+  }
+}
+```
+
+Nothing new. Just some imports, a dependency injection, a function which do the HTTP call, adn return with an Observe. Easy right?
+
+Now we are able to define our current location, so do that, and pass it to the weather service. Open up our *temperature-box.component.ts* file, import this new service, inject it, and use it. The result will be look like this:
+```ts
+import { OpenWeatherApiService } from '../open-weather-api.service';
+import { LocationService } from '../location.service';
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-temperature-box',
+  templateUrl: './temperature-box.component.html',
+  styleUrls: ['./temperature-box.component.css']
+})
+export class TemperatureBoxComponent implements OnInit {
+
+  currentTemp: Number;
+  currentCity: String;
+
+  constructor(private openWeatherApiService: OpenWeatherApiService, private locationService: LocationService) { }
+
+  ngOnInit() {
+    this.getCurrentWeatherData();
+  }
+
+  getCurrentWeatherData() {
+    this.locationService.getCurrentLocation().subscribe(response => {
+      this.currentCity = response['city'] + ', ' + response['country'];
+      this.openWeatherApiService.getCurrentWeather(response['city'], response['country']).subscribe(weatherResponse => {
+        this.currentTemp = +weatherResponse['main']['temp'] - 273.15;
+      });
+    });
+  }
+}
+```
+We store the current city (with country code) in *currentCity* variable, and we pass the city and country code to *getCurrentWeather()* function. So we need to modify the *openWeatherApiService* a little.
+Open up *open-weather-api.service.ts* file, and modify these lines:
+```ts
+...
+weatherApiEndpoint = 'http://api.openweathermap.org/data/2.5/weather?mode=json&APPID={APPID}';
+...
+getCurrentWeather(city, country): Observable<Object> {
+    const apiUrl = this.weatherApiEndpoint + `&q=${city},${country}`;
+
+    return Observable
+      .timer(0, 60000)
+      .flatMap(() => {
+        return this.http.get(apiUrl)
+          .map(response => {
+            const weatherBody = JSON.parse(response['_body']);
+            return weatherBody || { };
+          });
+      });
+  }
+```
+No more hardcoded city in the url. Cool. 
+___
+Let's create a new service:
+`ng g service background-image-api`
+This service will provide us some awesome background image.
+
+Add this service as a provider in the *app.module.ts*:
+```ts
+...
+import { BackgroundImageApiService } from './background-image-api.service';
+...
+providers: [
+    OpenWeatherApiService,
+    BackgroundImageApiService,
+    LocationService
+  ],
+...
+```
+
+Open *background-image-api.service.ts*:
+```ts
+import { Injectable } from '@angular/core';
+
+import { Http, RequestOptions, Headers } from '@angular/http';
+import { Observable } from 'rxjs/Observable';
+
+import 'rxjs/Rx';
+
+@Injectable()
+export class BackgroundImageApiService {
+
+  imageApiEndpoint = 'https://api.gettyimages.com/v3/search/images?phrase=nature&minimum_size=large&orientations=Horizontal';
+
+  constructor(private http: Http) { }
+
+  getRandomImage(): Observable<String> {
+    const headers = new Headers({'Api-Key': '#API-KEY'});
+    const options = new RequestOptions({ headers: headers });
+    return this.http.get(this.imageApiEndpoint, options)
+      .map(response => {
+        const respBody = JSON.parse(response['_body']);
+        const length = respBody['images'].length;
+        const randIndex = Math.floor(Math.random() * length);
+
+        const respString = respBody['images'][randIndex]['display_sizes'][0]['uri'].split('?')[0];
+        return respString;
+      });
+  }
+}
+```
+It's similar to any other service. The little trick here is the *Header*. This API call requires the Api-Key in the HTTP header. This is the way we do it:
+```ts
+const headers = new Headers({'Api-Key': '#API-KEY'});
+const options = new RequestOptions({ headers: headers });
+```
+And then, we pass the options as the second parameter of the *http.get* call. We also generate here a random index of the image array. This way we got different images by every refresh of the page. 
+
+Link this service to the *app.component.ts* file. 
+```ts
+...
+import { BackgroundImageApiService } from './background-image-api.service';
+...
+export class AppComponent implements OnInit{
+  title = 'app works!';
+  siteBackground: String;
+
+  constructor(private backgroundImageApiService: BackgroundImageApiService) {}
+
+  ngOnInit() {
+    this.getRandomBackground();
+  }
+
+  getRandomBackground() {
+    this.backgroundImageApiService.getRandomImage().subscribe(response => {
+      this.siteBackground = response;
+    });
+  }
+}
+```
+Same as always. Import, DI, service function call.
+And use this *siteBackground* variable in our *app.component.html* file:
+```html
+<div class="container" [ngStyle]="{'background-image': 'url(' + siteBackground + ')', 'background-size': 'cover', 'background-repeat': 'no-repeat'}">
+  <app-temperature-box></app-temperature-box>
+</div>
+```
+Here is something strange: 
+```html
+[ngStyle]="{'background-image': 'url(' + siteBackground + ')', 'background-size': 'cover', 'background-repeat': 'no-repeat'}"
+```
+This is a so called *directive*. Directives are modifying the behavior, or style of an element. This directive adds some style options to the div. This way we can set its background dynamically. 
+
+I also created a new class in *app.component.css*:
+```css
+.container {
+    width: 100%;
+    min-height: 1065px;
+    display: block;
+}
+```
+Just to make it pretty.
+
+## Lesson 7
+### Finishing our app
+The core parts of this app are done. Let's do some styling.
+
+I added this to my *style.css* file:
+```css
+body {
+    margin: 0;
+}
+```
+
+This is my *temperature-box.component.css* file:
+```css
+.content {
+    display: grid;
+}
+
+.box {
+    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    padding: 50px;
+    background: rgba(212,212,212,0.7);
+    border-radius: 25px;
+    margin-top: 220px;
+
+}
+
+.box h3 {
+    font-size: 9rem;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.box p {
+    font-size: 2rem;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+```
+
+And this is my *temperatury-box.component.html*:
+```html
+<div class="content">
+  <div class="box">
+    <h3>{{currentTemp}}&deg;</h3>
+    <p>
+      {{currentCity}}
+    </p>
+  </div>
+</div>
+```
+
+Save everything, and see what we got! :)
+
+## Lesson x
 ### Deployment
 Angular CLI provides us an awesome tool to build our app.
 `ng build --prod --aot`
 This command will generate a *dist* folder, where the compiled, minified, everyfied files are located. To delpoy the app we only need this folder. This way we can easily integrate this into any CI/CD tool. 
 OR
 The app could be easily hosted on AWS S3. There is CLI for aws, and also for s3, so its highly scriptable. I recommend to read my article about this topic: https://medium.com/@szilagyiabo/angular2-s3-love-deploy-to-cloud-in-6-steps-3f312647a659
-
 
